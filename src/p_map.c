@@ -1870,7 +1870,7 @@ static boolean PIT_CheckCameraLine(line_t *ld)
 
 //
 // PIT_CheckLine2
-// Part 2 of the above function
+// Part 2 of the below function
 //
 static boolean PIT_CheckLine2(line_t *ld)
 {
