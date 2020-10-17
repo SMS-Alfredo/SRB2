@@ -1948,6 +1948,8 @@ static boolean PIT_CheckLine2(line_t *ld)
 //
 static boolean PIT_CheckLine(line_t *ld)
 {
+	boolean collided;
+	
 	if (ld->polyobj && !(ld->polyobj->flags & POF_SOLID))
 		return true;
 
@@ -1984,7 +1986,7 @@ static boolean PIT_CheckLine(line_t *ld)
 #endif
 	}
 	
-	boolean collided = PIT_CheckLine2(ld);
+	collided = PIT_CheckLine2(ld);
 	LUAh_PostMobjLineCollide(tmthing, ld, collided);
 
 	return collided;
