@@ -1864,47 +1864,11 @@ static boolean PIT_CheckCameraLine(line_t *ld)
 }
 
 //
-// PIT_CheckLine
-// Adjusts tmfloorz and tmceilingz as lines are contacted
+// PIT_CheckLine2
+// Part 2 of the above function
 //
-static boolean PIT_CheckLine(line_t *ld)
+static boolean PIT_CheckLine2(line_t *ld)
 {
-	if (ld->polyobj && !(ld->polyobj->flags & POF_SOLID))
-		return true;
-
-	if (tmbbox[BOXRIGHT] <= ld->bbox[BOXLEFT] || tmbbox[BOXLEFT] >= ld->bbox[BOXRIGHT]
-	|| tmbbox[BOXTOP] <= ld->bbox[BOXBOTTOM] || tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP])
-		return true;
-
-	if (P_BoxOnLineSide(tmbbox, ld) != -1)
-		return true;
-
-	if (tmthing->flags & MF_PAPERCOLLISION) // Caution! Turning whilst up against a wall will get you stuck. You probably shouldn't give the player this flag.
-	{
-		fixed_t cosradius, sinradius;
-		cosradius = FixedMul(tmthing->radius, FINECOSINE(tmthing->angle>>ANGLETOFINESHIFT));
-		sinradius = FixedMul(tmthing->radius, FINESINE(tmthing->angle>>ANGLETOFINESHIFT));
-		if (P_PointOnLineSide(tmx - cosradius, tmy - sinradius, ld)
-		== P_PointOnLineSide(tmx + cosradius, tmy + sinradius, ld))
-			return true; // the line doesn't cross between collider's start or end
-#ifdef PAPER_COLLISIONCORRECTION
-		{
-			fixed_t dist;
-			vertex_t result;
-			angle_t langle;
-			P_ClosestPointOnLine(tmx, tmy, ld, &result);
-			langle = R_PointToAngle2(ld->v1->x, ld->v1->y, ld->v2->x, ld->v2->y);
-			langle += ANGLE_90*(P_PointOnLineSide(tmx, tmy, ld) ? -1 : 1);
-			dist = abs(FixedMul(tmthing->radius, FINECOSINE((tmthing->angle - langle)>>ANGLETOFINESHIFT)));
-			cosradius = FixedMul(dist, FINECOSINE(langle>>ANGLETOFINESHIFT));
-			sinradius = FixedMul(dist, FINESINE(langle>>ANGLETOFINESHIFT));
-			tmthing->flags |= MF_NOCLIP;
-			P_TeleportMove(tmthing, result.x + cosradius - tmthing->momx, result.y + sinradius - tmthing->momy, tmthing->z);
-			tmthing->flags &= ~MF_NOCLIP;
-		}
-#endif
-	}
-
 	// A line has been hit
 
 	// The moving thing's destination position will cross
@@ -1971,6 +1935,54 @@ static boolean PIT_CheckLine(line_t *ld)
 		tmdropoffz = lowfloor;
 
 	return true;
+}
+
+//
+// PIT_CheckLine
+// Adjusts tmfloorz and tmceilingz as lines are contacted
+//
+static boolean PIT_CheckLine(line_t *ld)
+{
+	if (ld->polyobj && !(ld->polyobj->flags & POF_SOLID))
+		return true;
+
+	if (tmbbox[BOXRIGHT] <= ld->bbox[BOXLEFT] || tmbbox[BOXLEFT] >= ld->bbox[BOXRIGHT]
+	|| tmbbox[BOXTOP] <= ld->bbox[BOXBOTTOM] || tmbbox[BOXBOTTOM] >= ld->bbox[BOXTOP])
+		return true;
+
+	if (P_BoxOnLineSide(tmbbox, ld) != -1)
+		return true;
+
+	if (tmthing->flags & MF_PAPERCOLLISION) // Caution! Turning whilst up against a wall will get you stuck. You probably shouldn't give the player this flag.
+	{
+		fixed_t cosradius, sinradius;
+		cosradius = FixedMul(tmthing->radius, FINECOSINE(tmthing->angle>>ANGLETOFINESHIFT));
+		sinradius = FixedMul(tmthing->radius, FINESINE(tmthing->angle>>ANGLETOFINESHIFT));
+		if (P_PointOnLineSide(tmx - cosradius, tmy - sinradius, ld)
+		== P_PointOnLineSide(tmx + cosradius, tmy + sinradius, ld))
+			return true; // the line doesn't cross between collider's start or end
+#ifdef PAPER_COLLISIONCORRECTION
+		{
+			fixed_t dist;
+			vertex_t result;
+			angle_t langle;
+			P_ClosestPointOnLine(tmx, tmy, ld, &result);
+			langle = R_PointToAngle2(ld->v1->x, ld->v1->y, ld->v2->x, ld->v2->y);
+			langle += ANGLE_90*(P_PointOnLineSide(tmx, tmy, ld) ? -1 : 1);
+			dist = abs(FixedMul(tmthing->radius, FINECOSINE((tmthing->angle - langle)>>ANGLETOFINESHIFT)));
+			cosradius = FixedMul(dist, FINECOSINE(langle>>ANGLETOFINESHIFT));
+			sinradius = FixedMul(dist, FINESINE(langle>>ANGLETOFINESHIFT));
+			tmthing->flags |= MF_NOCLIP;
+			P_TeleportMove(tmthing, result.x + cosradius - tmthing->momx, result.y + sinradius - tmthing->momy, tmthing->z);
+			tmthing->flags &= ~MF_NOCLIP;
+		}
+#endif
+	}
+	
+	boolean collided = PIT_CheckLine2(ld);
+	LUAh_PostMobjLineCollide(tmthing, ld, collided);
+
+	return collided;
 }
 
 // =========================================================================
