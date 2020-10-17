@@ -671,6 +671,7 @@ void LUAh_PostMobjLineCollideHook(mobj_t *thing, line_t *line, boolean collided,
 	I_Assert(thing->type < NUMMOBJTYPES);
 
 	lua_settop(gL, 0);
+	lua_pushcfunction(gL, LUA_GetErrorMessage);
 
 	// Look for all generic mobj collision hooks
 	for (hookp = mobjcollidehooks[MT_NULL]; hookp; hookp = hookp->next)
@@ -686,9 +687,10 @@ void LUAh_PostMobjLineCollideHook(mobj_t *thing, line_t *line, boolean collided,
 		}
 		lua_pushfstring(gL, FMT_HOOKID, hookp->id);
 		lua_gettable(gL, LUA_REGISTRYINDEX);
-		lua_pushvalue(gL, -3);
-		lua_pushvalue(gL, -3);
-		if (lua_pcall(gL, 3, 0, 0)) {
+		lua_pushvalue(gL, -4);
+		lua_pushvalue(gL, -4);
+		lua_pushvalue(gL, -4);
+		if (lua_pcall(gL, 3, 0, 1)) {
 			if (!hookp->error || cv_debug & DBG_LUA)
 				CONS_Alert(CONS_WARNING,"%s\n",lua_tostring(gL, -1));
 			lua_pop(gL, 1);
@@ -711,9 +713,10 @@ void LUAh_PostMobjLineCollideHook(mobj_t *thing, line_t *line, boolean collided,
 		}
 		lua_pushfstring(gL, FMT_HOOKID, hookp->id);
 		lua_gettable(gL, LUA_REGISTRYINDEX);
-		lua_pushvalue(gL, -3);
-		lua_pushvalue(gL, -3);
-		if (lua_pcall(gL, 3, 0, 0)) {
+		lua_pushvalue(gL, -4);
+		lua_pushvalue(gL, -4);
+		lua_pushvalue(gL, -4);
+		if (lua_pcall(gL, 3, 0, 1)) {
 			if (!hookp->error || cv_debug & DBG_LUA)
 				CONS_Alert(CONS_WARNING,"%s\n",lua_tostring(gL, -1));
 			lua_pop(gL, 1);
